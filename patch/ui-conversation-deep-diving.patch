@@ -1,0 +1,351 @@
+﻿diff --git "a/D:\\deepseek_harness\\logo-backup\\ui-conversation-client.js" "b/C:\\Users\\zhangyt03\\.dsh\\profiles\\node_modules\\@deepseek-ai\\dsh-client-ui-conversation\\lib\\client.js"
+index 86e7906..c87f447 100644
+--- "a/D:\\deepseek_harness\\logo-backup\\ui-conversation-client.js"
++++ "b/C:\\Users\\zhangyt03\\.dsh\\profiles\\node_modules\\@deepseek-ai\\dsh-client-ui-conversation\\lib\\client.js"
+@@ -5298,11 +5298,42 @@ window.__ModuleLoader__.load({
+ 			for (const turn of timeline.turns.values()) if (turn.status === "open" && turn.start !== void 0) latest = turn.start.time;
+ 			return latest;
+ 		}
++		//#region deep-diving native status (custom): rising bubbles + rotating fun captions
++		const ddnCss = ".ddn-bubbles{position:relative;width:18px;height:14px;margin-right:8px;flex:none;display:inline-block;vertical-align:-2px}.ddn-bubble{position:absolute;bottom:0;width:4px;height:4px;border-radius:50%;background:var(--dsw-alias-label-tertiary);opacity:0;animation:ddn-rise 1.9s ease-in infinite}.ddn-bubble:nth-child(1){left:0;animation-delay:0s}.ddn-bubble:nth-child(2){left:7px;animation-delay:.65s}.ddn-bubble:nth-child(3){left:14px;animation-delay:1.3s}.ddn-caption{min-width:0;max-width:min(460px,68vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;animation:ddn-in .4s ease both}@keyframes ddn-rise{0%{transform:translateY(0) scale(.7);opacity:0}20%{opacity:.9}100%{transform:translateY(-11px) scale(1);opacity:0}}@keyframes ddn-in{0%{opacity:0;transform:translateY(4px)}100%{opacity:1;transform:translateY(0)}}@media (prefers-reduced-motion: reduce){.ddn-bubble,.ddn-caption{animation:none !important}}";
++		const ddnTagId = "@deepseek-ai/dsh-client-ui-conversation/DeepDiveStatus.module.css";
++		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(ddnTagId) + "]") === null) {
++			const tag = document.createElement("style");
++			tag.dataset.plugin = "@deepseek-ai/dsh-client-ui-conversation";
++			tag.dataset.pluginCss = ddnTagId;
++			tag.textContent = ddnCss;
++			document.head.appendChild(tag);
++		}
++		/** Caption pool size for the running status (keys turnStatus.caption.00 … .119). */
++		const DDN_CAPTION_COUNT = 120;
++		/** Fallback caption rotation interval while the turn runs without tool calls. */
++		const DDN_CAPTION_INTERVAL_MS = 4500;
++		/** Pad a caption index to its dictionary key (0 → "turnStatus.caption.00"). */
++		function ddnCaptionKey(index) {
++			return "turnStatus.caption." + String(index).padStart(2, "0");
++		}
+ 		/** Turn-level model activity label retained across first-token, tool, and streaming phases. */
+-		function TurnStatus({ startTime, t }) {
++		function TurnStatus({ startTime, runningCalls, t }) {
+ 			const [mountedAt] = (0, react.useState)(() => Date.now());
+ 			const anchor = startTime ?? mountedAt;
+ 			const [elapsedMs, setElapsedMs] = (0, react.useState)(() => Math.max(0, Date.now() - anchor));
++			const [caption, setCaption] = (0, react.useState)(() => Math.floor(Math.random() * DDN_CAPTION_COUNT));
++			/** Claude-style: a new tool call switches the caption (random pick, never the current one). */
++			const lastCallIdRef = (0, react.useRef)("");
++			(0, react.useEffect)(() => {
++				const calls = runningCalls ?? [];
++				const lastCallId = calls.length === 0 ? "" : calls[calls.length - 1].callId;
++				if (lastCallId === "" || lastCallId === lastCallIdRef.current) return;
++				lastCallIdRef.current = lastCallId;
++				setCaption((current) => {
++					const next = Math.floor(Math.random() * DDN_CAPTION_COUNT);
++					return next === current ? (next + 1) % DDN_CAPTION_COUNT : next;
++				});
++			}, [runningCalls]);
+ 			(0, react.useEffect)(() => {
+ 				const tick = () => {
+ 					setElapsedMs(Math.max(0, Date.now() - anchor));
+@@ -5313,12 +5344,31 @@ window.__ModuleLoader__.load({
+ 					clearInterval(id);
+ 				};
+ 			}, [anchor]);
++			/** Fallback rotation only while no tool is running (thinking/streaming): a live tool call pins the caption switched by the event-driven effect above. */
++			(0, react.useEffect)(() => {
++				const calls = runningCalls ?? [];
++				if (calls.length > 0) return void 0;
++				const id = setInterval(() => {
++					setCaption((c) => (c + 1) % DDN_CAPTION_COUNT);
++				}, DDN_CAPTION_INTERVAL_MS);
++				return () => {
++					clearInterval(id);
++				};
++			}, [runningCalls]);
+ 			const showClock = elapsedMs >= 15e3;
+ 			return (0, react_jsx_runtime.jsxs)("div", {
+ 				className: ChatView_module_css_default.turnStatus,
+ 				role: "status",
+ 				"aria-live": "polite",
+-				children: ["Deep diving...", showClock && (0, react_jsx_runtime.jsx)("span", {
++				children: [(0, react_jsx_runtime.jsxs)("span", {
++					className: "ddn-bubbles",
++					"aria-hidden": true,
++					children: [(0, react_jsx_runtime.jsx)("span", { className: "ddn-bubble" }), (0, react_jsx_runtime.jsx)("span", { className: "ddn-bubble" }), (0, react_jsx_runtime.jsx)("span", { className: "ddn-bubble" })]
++				}), (0, react_jsx_runtime.jsx)("span", {
++					className: "ddn-caption",
++					key: caption,
++					children: t(ddnCaptionKey(caption))
++				}), showClock && (0, react_jsx_runtime.jsx)("span", {
+ 					className: ChatView_module_css_default.turnStatusClock,
+ 					"aria-hidden": true,
+ 					children: formatRunDuration(elapsedMs, t)
+@@ -5336,6 +5386,7 @@ window.__ModuleLoader__.load({
+ 			const inbox = useSession((s) => s.queue);
+ 			const cwd = useSessions((s) => s.byId[sessionId]?.cwd);
+ 			const running = useSession((s) => s.running);
++			const runningCalls = useSession((s) => s.runningCalls);
+ 			const openState = useSession((s) => s.openState);
+ 			const openError = useSession((s) => s.openError);
+ 			const hasMore = useSession((s) => s.hasMore);
+@@ -5546,6 +5597,7 @@ window.__ModuleLoader__.load({
+ 							}, nodeKey)),
+ 							running && (0, react_jsx_runtime.jsx)(TurnStatus, {
+ 								startTime: runningTurnStart,
++								runningCalls,
+ 								t
+ 							}),
+ 							pendingSteering.map((item) => (0, react_jsx_runtime.jsx)(PendingSteeringBubble, {
+@@ -5857,6 +5909,126 @@ window.__ModuleLoader__.load({
+ 			"chat.loadError": "历史加载失败：{message}（{code}）",
+ 			"chat.loadOlder": "加载更早",
+ 			"chat.toBottom": "回到底部",
++			"turnStatus.caption.00": "给望远镜擦窗…",
++			"turnStatus.caption.01": "洗渔网…",
++			"turnStatus.caption.02": "晒月亮…",
++			"turnStatus.caption.03": "查阅潮汐表…",
++			"turnStatus.caption.04": "给海鸥写信…",
++			"turnStatus.caption.05": "晒渔网…",
++			"turnStatus.caption.06": "擦亮珍珠…",
++			"turnStatus.caption.07": "遛电鳗…",
++			"turnStatus.caption.08": "数磷虾…",
++			"turnStatus.caption.09": "查阅鲸鱼族谱…",
++			"turnStatus.caption.10": "给海藻梳头…",
++			"turnStatus.caption.11": "排练鲸歌…",
++			"turnStatus.caption.12": "遛海马…",
++			"turnStatus.caption.13": "给冲浪者让路…",
++			"turnStatus.caption.14": "等月亮下班…",
++			"turnStatus.caption.15": "给螃蟹系领结…",
++			"turnStatus.caption.16": "晒水母…",
++			"turnStatus.caption.17": "给珊瑚贴面膜…",
++			"turnStatus.caption.18": "搅拌海带汤…",
++			"turnStatus.caption.19": "陪章鱼数腿…",
++			"turnStatus.caption.20": "喂海鸥…",
++			"turnStatus.caption.21": "梳理鲸须…",
++			"turnStatus.caption.22": "给灯笼鱼充电…",
++			"turnStatus.caption.23": "排练喷水柱…",
++			"turnStatus.caption.24": "教章鱼走直线…",
++			"turnStatus.caption.25": "洗海藻…",
++			"turnStatus.caption.26": "吹季风…",
++			"turnStatus.caption.27": "偷听海豚开会…",
++			"turnStatus.caption.28": "打捞珍珠…",
++			"turnStatus.caption.29": "给潜水艇换灯泡…",
++			"turnStatus.caption.30": "泡贝壳…",
++			"turnStatus.caption.31": "煮海水…",
++			"turnStatus.caption.32": "陪螃蟹数腿…",
++			"turnStatus.caption.33": "煮贝壳浓汤…",
++			"turnStatus.caption.34": "教海豚唱歌…",
++			"turnStatus.caption.35": "给海豚涂防晒…",
++			"turnStatus.caption.36": "给灯塔画航线…",
++			"turnStatus.caption.37": "叠水花…",
++			"turnStatus.caption.38": "教海鸥唱歌…",
++			"turnStatus.caption.39": "叠海平线…",
++			"turnStatus.caption.40": "泡水母…",
++			"turnStatus.caption.41": "给货轮让路…",
++			"turnStatus.caption.42": "打捞沉船宝藏…",
++			"turnStatus.caption.43": "吹泡泡圈…",
++			"turnStatus.caption.44": "陪海星数腿…",
++			"turnStatus.caption.45": "帮寄居蟹搬家…",
++			"turnStatus.caption.46": "吹螺号…",
++			"turnStatus.caption.47": "偷听沉船说梦话…",
++			"turnStatus.caption.48": "给鲸歌充电…",
++			"turnStatus.caption.49": "查阅航海日志…",
++			"turnStatus.caption.50": "搅拌漩涡…",
++			"turnStatus.caption.51": "给海星涂防晒…",
++			"turnStatus.caption.52": "搅拌海水…",
++			"turnStatus.caption.53": "数泡泡圈…",
++			"turnStatus.caption.54": "给灯塔充电…",
++			"turnStatus.caption.55": "帮海龟搬家…",
++			"turnStatus.caption.56": "煮海藻沙拉…",
++			"turnStatus.caption.57": "给海马梳头…",
++			"turnStatus.caption.58": "给鲸歌写谱…",
++			"turnStatus.caption.59": "遛海龟…",
++			"turnStatus.caption.60": "给沉船擦窗…",
++			"turnStatus.caption.61": "排练海豚体操…",
++			"turnStatus.caption.62": "给电鳗充电…",
++			"turnStatus.caption.63": "给海藻编辫子…",
++			"turnStatus.caption.64": "给海蛇编辫子…",
++			"turnStatus.caption.65": "教螃蟹走直线…",
++			"turnStatus.caption.66": "偷听月亮说梦话…",
++			"turnStatus.caption.67": "给水母充电…",
++			"turnStatus.caption.68": "量潮汐…",
++			"turnStatus.caption.69": "给海风写谱…",
++			"turnStatus.caption.70": "帮章鱼搬家…",
++			"turnStatus.caption.71": "打捞漂流瓶…",
++			"turnStatus.caption.72": "等灯塔下班…",
++			"turnStatus.caption.73": "叠渔网…",
++			"turnStatus.caption.74": "哄小丑鱼睡觉…",
++			"turnStatus.caption.75": "梳理水母触手…",
++			"turnStatus.caption.76": "叠海浪…",
++			"turnStatus.caption.77": "给海龟让路…",
++			"turnStatus.caption.78": "喂磷虾…",
++			"turnStatus.caption.79": "擦亮海盐…",
++			"turnStatus.caption.80": "查阅海洋法典…",
++			"turnStatus.caption.81": "偷听鲸鱼说梦话…",
++			"turnStatus.caption.82": "洗鲸须…",
++			"turnStatus.caption.83": "数沙丁鱼…",
++			"turnStatus.caption.84": "给灯笼鱼系领结…",
++			"turnStatus.caption.85": "教沙丁鱼唱歌…",
++			"turnStatus.caption.86": "哄珊瑚睡觉…",
++			"turnStatus.caption.87": "给潮汐写谱…",
++			"turnStatus.caption.88": "给龙虾系领结…",
++			"turnStatus.caption.89": "给寄居蟹系领结…",
++			"turnStatus.caption.90": "查阅海图…",
++			"turnStatus.caption.91": "量回声…",
++			"turnStatus.caption.92": "给珊瑚梳头…",
++			"turnStatus.caption.93": "洗沉船甲板…",
++			"turnStatus.caption.94": "等沙丁鱼下班…",
++			"turnStatus.caption.95": "帮贝壳搬家…",
++			"turnStatus.caption.96": "教小丑鱼唱歌…",
++			"turnStatus.caption.97": "给渔船让路…",
++			"turnStatus.caption.98": "煮海带汤…",
++			"turnStatus.caption.99": "给鲑鱼画航线…",
++			"turnStatus.caption.100": "给灯笼鱼换灯泡…",
++			"turnStatus.caption.101": "洗贝壳…",
++			"turnStatus.caption.102": "量海水深度…",
++			"turnStatus.caption.103": "给漂流瓶写信…",
++			"turnStatus.caption.104": "教龙虾走直线…",
++			"turnStatus.caption.105": "给海豹涂防晒…",
++			"turnStatus.caption.106": "哄海星睡觉…",
++			"turnStatus.caption.107": "搅拌墨汁…",
++			"turnStatus.caption.108": "擦亮望远镜…",
++			"turnStatus.caption.109": "给小丑鱼涂防晒…",
++			"turnStatus.caption.110": "教寄居蟹走直线…",
++			"turnStatus.caption.111": "晒海盐…",
++			"turnStatus.caption.112": "给漂流瓶擦窗…",
++			"turnStatus.caption.113": "给海参贴面膜…",
++			"turnStatus.caption.114": "给座头鲸画航线…",
++			"turnStatus.caption.115": "量自己的身长…",
++			"turnStatus.caption.116": "煮海底捞…",
++			"turnStatus.caption.117": "搅拌潮汐…",
++			"turnStatus.caption.118": "量浪高…",
++			"turnStatus.caption.119": "给企鹅系领结…",
+ 			"message.extraBlock": "附加内容块",
+ 			"message.contextInjection": "上下文注入",
+ 			"message.contextRecall": "跨会话召回",
+@@ -6022,6 +6194,126 @@ window.__ModuleLoader__.load({
+ 			"chat.loadError": "Failed to load history: {message} ({code})",
+ 			"chat.loadOlder": "Load earlier",
+ 			"chat.toBottom": "Back to bottom",
++			"turnStatus.caption.00": "Wiping the spyglass's windows...",
++			"turnStatus.caption.01": "Washing the fishing net...",
++			"turnStatus.caption.02": "Drying the moon...",
++			"turnStatus.caption.03": "Consulting the tide table...",
++			"turnStatus.caption.04": "Writing to the seagulls...",
++			"turnStatus.caption.05": "Drying the fishing net...",
++			"turnStatus.caption.06": "Polishing the pearls...",
++			"turnStatus.caption.07": "Walking the electric eel...",
++			"turnStatus.caption.08": "Counting the krill...",
++			"turnStatus.caption.09": "Consulting the whale family tree...",
++			"turnStatus.caption.10": "Brushing the seaweed...",
++			"turnStatus.caption.11": "Rehearsing the whale song...",
++			"turnStatus.caption.12": "Walking the seahorse...",
++			"turnStatus.caption.13": "Making way for the surfer...",
++			"turnStatus.caption.14": "Waiting for the moon to clock off...",
++			"turnStatus.caption.15": "Tying the crab's bowtie...",
++			"turnStatus.caption.16": "Drying the jellyfish...",
++			"turnStatus.caption.17": "Masking the coral...",
++			"turnStatus.caption.18": "Stirring the kelp soup...",
++			"turnStatus.caption.19": "Counting the octopus's legs...",
++			"turnStatus.caption.20": "Feeding the seagulls...",
++			"turnStatus.caption.21": "Combing the baleen...",
++			"turnStatus.caption.22": "Charging the lanternfish...",
++			"turnStatus.caption.23": "Rehearsing the spout...",
++			"turnStatus.caption.24": "Teaching the octopus to walk straight...",
++			"turnStatus.caption.25": "Washing the seaweed...",
++			"turnStatus.caption.26": "Blowing the monsoon...",
++			"turnStatus.caption.27": "Eavesdropping on the dolphins meeting...",
++			"turnStatus.caption.28": "Fishing up the pearls...",
++			"turnStatus.caption.29": "Changing the submarine's bulb...",
++			"turnStatus.caption.30": "Soaking the shells...",
++			"turnStatus.caption.31": "Simmering the sea water...",
++			"turnStatus.caption.32": "Counting the crab's legs...",
++			"turnStatus.caption.33": "Simmering the shell chowder...",
++			"turnStatus.caption.34": "Teaching the dolphins to sing...",
++			"turnStatus.caption.35": "Sunscreening the dolphins...",
++			"turnStatus.caption.36": "Charting the lighthouse's route...",
++			"turnStatus.caption.37": "Folding the spray...",
++			"turnStatus.caption.38": "Teaching the seagulls to sing...",
++			"turnStatus.caption.39": "Folding the horizon...",
++			"turnStatus.caption.40": "Soaking the jellyfish...",
++			"turnStatus.caption.41": "Making way for the cargo ship...",
++			"turnStatus.caption.42": "Fishing up the shipwreck treasure...",
++			"turnStatus.caption.43": "Blowing the bubble rings...",
++			"turnStatus.caption.44": "Counting the starfish's legs...",
++			"turnStatus.caption.45": "Helping the hermit crab move...",
++			"turnStatus.caption.46": "Blowing the conch...",
++			"turnStatus.caption.47": "Listening to the shipwreck's sleep talk...",
++			"turnStatus.caption.48": "Charging the whale song...",
++			"turnStatus.caption.49": "Consulting the logbook...",
++			"turnStatus.caption.50": "Stirring the whirlpool...",
++			"turnStatus.caption.51": "Sunscreening the starfish...",
++			"turnStatus.caption.52": "Stirring the sea...",
++			"turnStatus.caption.53": "Counting the bubble rings...",
++			"turnStatus.caption.54": "Charging the lighthouse...",
++			"turnStatus.caption.55": "Helping the sea turtle move...",
++			"turnStatus.caption.56": "Simmering the seaweed salad...",
++			"turnStatus.caption.57": "Brushing the seahorse...",
++			"turnStatus.caption.58": "Scoring the whale song...",
++			"turnStatus.caption.59": "Walking the sea turtle...",
++			"turnStatus.caption.60": "Wiping the shipwreck's windows...",
++			"turnStatus.caption.61": "Rehearsing the dolphin routine...",
++			"turnStatus.caption.62": "Charging the electric eel...",
++			"turnStatus.caption.63": "Braiding the seaweed...",
++			"turnStatus.caption.64": "Braiding the sea snake...",
++			"turnStatus.caption.65": "Teaching the crab to walk straight...",
++			"turnStatus.caption.66": "Listening to the moon's sleep talk...",
++			"turnStatus.caption.67": "Charging the jellyfish...",
++			"turnStatus.caption.68": "Measuring the tides...",
++			"turnStatus.caption.69": "Scoring the sea breeze...",
++			"turnStatus.caption.70": "Helping the octopus move...",
++			"turnStatus.caption.71": "Fishing up the message bottles...",
++			"turnStatus.caption.72": "Waiting for the lighthouse to clock off...",
++			"turnStatus.caption.73": "Folding the fishing net...",
++			"turnStatus.caption.74": "Tucking the clownfish in...",
++			"turnStatus.caption.75": "Combing the jellyfish tentacles...",
++			"turnStatus.caption.76": "Folding the waves...",
++			"turnStatus.caption.77": "Making way for the sea turtle...",
++			"turnStatus.caption.78": "Feeding the krill...",
++			"turnStatus.caption.79": "Polishing the sea salt...",
++			"turnStatus.caption.80": "Consulting the ocean code...",
++			"turnStatus.caption.81": "Listening to the whale's sleep talk...",
++			"turnStatus.caption.82": "Washing the baleen...",
++			"turnStatus.caption.83": "Counting the sardines...",
++			"turnStatus.caption.84": "Tying the lanternfish's bowtie...",
++			"turnStatus.caption.85": "Teaching the sardines to sing...",
++			"turnStatus.caption.86": "Tucking the coral in...",
++			"turnStatus.caption.87": "Scoring the tides...",
++			"turnStatus.caption.88": "Tying the lobster's bowtie...",
++			"turnStatus.caption.89": "Tying the hermit crab's bowtie...",
++			"turnStatus.caption.90": "Consulting the sea charts...",
++			"turnStatus.caption.91": "Measuring the echoes...",
++			"turnStatus.caption.92": "Brushing the coral...",
++			"turnStatus.caption.93": "Washing the shipwreck deck...",
++			"turnStatus.caption.94": "Waiting for the sardines to clock off...",
++			"turnStatus.caption.95": "Helping the shells move...",
++			"turnStatus.caption.96": "Teaching the clownfish to sing...",
++			"turnStatus.caption.97": "Making way for the fishing boat...",
++			"turnStatus.caption.98": "Simmering the kelp soup...",
++			"turnStatus.caption.99": "Charting the salmon's route...",
++			"turnStatus.caption.100": "Changing the lanternfish's bulb...",
++			"turnStatus.caption.101": "Washing the shells...",
++			"turnStatus.caption.102": "Measuring the sea depth...",
++			"turnStatus.caption.103": "Writing to a message in a bottle...",
++			"turnStatus.caption.104": "Teaching the lobster to walk straight...",
++			"turnStatus.caption.105": "Sunscreening the seal...",
++			"turnStatus.caption.106": "Tucking the starfish in...",
++			"turnStatus.caption.107": "Stirring the squid ink...",
++			"turnStatus.caption.108": "Polishing the spyglass...",
++			"turnStatus.caption.109": "Sunscreening the clownfish...",
++			"turnStatus.caption.110": "Teaching the hermit crab to walk straight...",
++			"turnStatus.caption.111": "Drying the sea salt...",
++			"turnStatus.caption.112": "Wiping the message bottle's windows...",
++			"turnStatus.caption.113": "Masking the sea cucumber...",
++			"turnStatus.caption.114": "Charting the humpback's route...",
++			"turnStatus.caption.115": "Measuring my own length...",
++			"turnStatus.caption.116": "Simmering the deep-sea hotpot...",
++			"turnStatus.caption.117": "Stirring the tides...",
++			"turnStatus.caption.118": "Measuring the wave height...",
++			"turnStatus.caption.119": "Tying the penguin's bowtie...",
+ 			"message.extraBlock": "Extra content block",
+ 			"message.contextInjection": "Context injection",
+ 			"message.contextRecall": "Session recall",
