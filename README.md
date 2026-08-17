@@ -1,4 +1,4 @@
-# 鲸语吧 whale-talk 🐋
+# 鲸语 whale-talk 🐋
 
 给 DeepSeek Harness **Web GUI 原生运行状态行**（"Deep diving..."）注入鲸鱼视角的趣味轮播文案与气泡动画——不打新插件、不加新 UI 元素，直接增强原生 `TurnStatus` 组件。
 
