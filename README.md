@@ -1,6 +1,6 @@
-# Deep Diving Status
+# deep-diving-whale 🐋
 
-给 DeepSeek Harness **Web GUI 原生运行状态行**注入 Claude 风格的趣味轮播文案与气泡动画——不打新插件、不加新 UI 元素，直接增强原生 `TurnStatus` 组件（聊天流末尾的 "Deep diving..." 流光文字）。
+给 DeepSeek Harness **Web GUI 原生运行状态行**（"Deep diving..."）注入鲸鱼视角的趣味轮播文案与气泡动画——不打新插件、不加新 UI 元素，直接增强原生 `TurnStatus` 组件。
 
 > 效果：Agent 运行时聊天流末尾出现原生流光渐变文字 + 三颗上升气泡 + 轮播文案（「给水母充电…」「叠海浪…」），15s 后附运行计时器。可在 `docs/` 自行放截图。
 
@@ -20,8 +20,8 @@
 前置：`dsh web` 已安装运行、Node.js ≥ 20.11（使用 `import.meta.dirname`）。
 
 ```bash
-git clone <your-repo-url> deep-diving-status
-cd deep-diving-status
+git clone <your-repo-url> deep-diving-whale
+cd deep-diving-whale
 
 node apply-to-bundle.mjs    # 把 120 条文案写入原生 bundle
 node self-check.mjs         # 16 项回归检查
@@ -46,7 +46,7 @@ node self-check.mjs         # 16 项回归检查
 ## 文件结构
 
 ```
-deep-diving-status/
+deep-diving-whale/
 ├── generate-captions.mjs     # 词表驱动生成器（自定义文案改这里）
 ├── apply-to-bundle.mjs       # 写入原生 bundle + 同步轮播池大小
 ├── self-check.mjs            # 16 项回归检查
