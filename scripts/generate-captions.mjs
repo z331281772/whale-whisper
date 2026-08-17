@@ -127,9 +127,10 @@ pick.forEach((c, i) => {
   enLines.push(`\t\t\t"${key}": "${c.en}",`);
 });
 import fs from "node:fs";
-fs.writeFileSync("captions.json", JSON.stringify({ zh: pick.map(c => c.zh), en: pick.map(c => c.en) }, null, 2));
-fs.writeFileSync("dict-zh.txt", zhLines.join("\n") + "\n");
-fs.writeFileSync("dict-en.txt", enLines.join("\n") + "\n");
+const OUT = `${import.meta.dirname}/..`;
+fs.writeFileSync(`${OUT}/captions.json`, JSON.stringify({ zh: pick.map(c => c.zh), en: pick.map(c => c.en) }, null, 2));
+fs.writeFileSync(`${OUT}/dict-zh.txt`, zhLines.join("\n") + "\n");
+fs.writeFileSync(`${OUT}/dict-en.txt`, enLines.join("\n") + "\n");
 console.log(`generated ${pick.length} captions (target ${ALLOWED})`);
 console.log(`objects used: ${byObj.size}, max per object: ${Math.max(...byObj.values())}`);
 console.log(`actions used: ${byAction.size}, max per action: ${Math.max(...byAction.values())}`);

@@ -2,12 +2,13 @@
  * Build docs/demo.html — a self-contained, double-clickable showcase of the
  * core capability: native "Deep diving..." status line vs the enhanced one
  * (rising bubbles + 120 rotating zh/en captions + run timer).
- * Usage: node build-demo.mjs   → writes docs/demo.html
+ * Usage: node scripts/build-demo.mjs   → writes docs/demo.html
  */
 import fs from "node:fs";
 
 const HERE = import.meta.dirname;
-const captions = JSON.parse(fs.readFileSync(`${HERE}/captions.json`, "utf8"));
+const ROOT = `${HERE}/..`;
+const captions = JSON.parse(fs.readFileSync(`${ROOT}/captions.json`, "utf8"));
 const zh = JSON.stringify(captions.zh);
 const en = JSON.stringify(captions.en);
 
@@ -119,6 +120,6 @@ if (new URLSearchParams(location.search).get("autoplay") === "1") runBtn.click()
 </body>
 </html>
 `;
-fs.mkdirSync(`${HERE}/docs`, { recursive: true });
-fs.writeFileSync(`${HERE}/docs/demo.html`, html);
+fs.mkdirSync(`${ROOT}/docs`, { recursive: true });
+fs.writeFileSync(`${ROOT}/docs/demo.html`, html);
 console.log(`docs/demo.html written (${html.length} bytes, ${captions.zh.length} zh + ${captions.en.length} en captions embedded)`);

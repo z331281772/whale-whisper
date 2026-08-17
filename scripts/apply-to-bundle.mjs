@@ -10,9 +10,10 @@ import fs from "node:fs";
 import { readBundle } from "./paths.mjs";
 
 const HERE = import.meta.dirname;
+const ROOT = `${HERE}/..`;
 const { path: BUNDLE, src } = readBundle();
-const zhBlock = fs.readFileSync(`${HERE}/dict-zh.txt`, "utf8").trimEnd();
-const enBlock = fs.readFileSync(`${HERE}/dict-en.txt`, "utf8").trimEnd();
+const zhBlock = fs.readFileSync(`${ROOT}/dict-zh.txt`, "utf8").trimEnd();
+const enBlock = fs.readFileSync(`${ROOT}/dict-en.txt`, "utf8").trimEnd();
 const count = (zhBlock.match(/turnStatus\.caption\.\d{2,3}"/g) ?? []).length;
 
 const blockRe = /(\t\t\t"turnStatus\.caption\.\d{2,3}": "[^"]*",(?:\n\t\t\t"turnStatus\.caption\.\d{2,3}": "[^"]*",)+)/g;

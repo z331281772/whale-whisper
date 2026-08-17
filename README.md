@@ -34,17 +34,30 @@
 
 前置：`dsh web` 已安装运行、Node.js ≥ 20.11（使用 `import.meta.dirname`）。
 
+### 方式 A：作为 dsh 插件安装（推荐，一条命令）
+
+```bash
+dsh plugin --profile web add <仓库地址或本地路径>
+# 例：dsh plugin --profile web add git@github.com:z331281772/deep-diving-whale.git
+```
+
+安装后重启 `dsh web`：插件挂载时 **Node 半区自动检测并打补丁**（幂等，已打则跳过），刷新页面即见效果。卸载：`dsh plugin --profile web remove deep-diving-whale`（bundle 补丁需用 `node scripts/restore-all.mjs` 还原，或重装 ui-conversation 包）。
+
+> Windows 注意：本地路径跨盘（如 D: 装到 C: 的 profile）会触发 pnpm 的绝对路径 bug，请用 git URL 安装或先建 junction。
+
+### 方式 B：工具链手动打补丁
+
 ```bash
 git clone <your-repo-url> deep-diving-whale
 cd deep-diving-whale
 
-node apply-to-bundle.mjs    # 把 120 条文案写入原生 bundle
-node self-check.mjs         # 16 项回归检查
+node scripts/apply-to-bundle.mjs    # 把 120 条文案写入原生 bundle
+node scripts/self-check.mjs         # 16 项回归检查
 ```
 
 **刷新 dsh Web 页面**（bundle 按 no-cache 重新拉取），发一条消息让 Agent 跑起来，聊天流末尾即可看到效果。
 
-> 非默认安装：`node apply-to-bundle.mjs --bundle=C:\path\to\dsh-client-ui-conversation\lib\client.js`
+> 非默认安装：`node scripts/apply-to-bundle.mjs --bundle=C:\path\to\dsh-client-ui-conversation\lib\client.js`
 > 路径默认取 `$DSH_HOME`（未设置时 `~/.dsh`）下的 `profiles/node_modules/@deepseek-ai/dsh-client-ui-conversation/lib/client.js`。
 
 ## 机制
@@ -62,18 +75,25 @@ node self-check.mjs         # 16 项回归检查
 
 ```
 deep-diving-whale/
-├── generate-captions.mjs     # 词表驱动生成器（自定义文案改这里）
-├── apply-to-bundle.mjs       # 写入原生 bundle + 同步轮播池大小
-├── self-check.mjs            # 16 项回归检查
-├── smoke-conversation.mjs    # 工厂冒烟测试
-├── restore-all.mjs           # 一键检测/恢复（pnpm 升级覆盖后）
-├── paths.mjs                 # 路径解析（--bundle= 覆盖）
-├── build-demo.mjs             # 从 captions.json 生成 docs/demo.html 演示页
-├── dict-zh.txt               # 现成 120 条中文文案（可直接应用）
-├── dict-en.txt               # 现成 120 条英文文案
+├── package.json               # dsh 插件规范：dsh.bundle.patch + dsh.client + exports
+├── cordis.patch.yml           # 注册进 Web 浏览器 roster
+├── lib/
+│   ├── index.js               # Node 半区：挂载时自动检测并打补丁（幂等，失败仅告警）
+│   └── client.js              # 浏览器半区：满足 roster 契约的空 entry（ModuleLoader 格式）
+├── scripts/
+│   ├── generate-captions.mjs  # 词表驱动生成器（自定义文案改这里）
+│   ├── apply-to-bundle.mjs    # 写入原生 bundle + 同步轮播池大小
+│   ├── self-check.mjs         # 16 项回归检查
+│   ├── smoke-conversation.mjs # 工厂冒烟测试
+│   ├── restore-all.mjs        # 一键检测/恢复（pnpm 升级覆盖后）
+│   ├── build-demo.mjs         # 生成 docs/demo.html 演示页
+│   └── paths.mjs              # 路径解析（--bundle= 覆盖）
+├── dict-zh.txt               # 现成 120 条中文文案（补丁数据）
+├── dict-en.txt               # 现成 120 条英文文案（补丁数据）
 ├── captions.json             # 生成数据（zh/en 对齐）
 ├── patch/
 │   └── ui-conversation-deep-diving.patch   # 完整 unified diff（审阅用）
+├── docs/                     # 演示页 + 截图
 ├── LICENSE                   # MIT
 └── README.md
 ```
@@ -83,17 +103,17 @@ deep-diving-whale/
 dsh 包升级会把 bundle 覆盖回原生版。一条命令检测并复原：
 
 ```bash
-node restore-all.mjs
+node scripts/restore-all.mjs
 ```
 
 ## 自定义文案
 
-编辑 `generate-captions.mjs` 的 `POOL`（动作前缀 + 中英宾语配对），然后：
+编辑 `scripts/generate-captions.mjs` 的 `POOL`（动作前缀 + 中英宾语配对），然后：
 
 ```bash
-node generate-captions.mjs 120   # 重新生成
-node apply-to-bundle.mjs         # 写回 bundle
-node self-check.mjs              # 回归检查
+node scripts/generate-captions.mjs 120   # 重新生成
+node scripts/apply-to-bundle.mjs         # 写回 bundle
+node scripts/self-check.mjs              # 回归检查
 ```
 
 ## 还原原生
