@@ -2,7 +2,22 @@
 
 给 DeepSeek Harness **Web GUI 原生运行状态行**（"Deep diving..."）注入鲸鱼视角的趣味轮播文案与气泡动画——不打新插件、不加新 UI 元素，直接增强原生 `TurnStatus` 组件。
 
-> 效果：Agent 运行时聊天流末尾出现原生流光渐变文字 + 三颗上升气泡 + 轮播文案（「给水母充电…」「叠海浪…」），15s 后附运行计时器。可在 `docs/` 自行放截图。
+## 🎯 核心能力（一眼看懂）
+
+| | 原生 | deep-diving-whale |
+|---|---|---|
+| 状态行 | `Deep diving...` 静态流光文字，卡到本轮结束 | 三颗上升气泡 + **120 条中英轮播文案**，动个不停 |
+| 换文案时机 | 无 | 每次**工具调用开始**随机换一条（Claude 同款）；纯思考时定时轮播 |
+| 运行时长 | 15s 后显示计时器 | 同左（原生保留） |
+| 无障碍 | — | `aria-live` 播报 + 减弱动态降级 |
+
+**效果图**（演示页真实截图）：
+
+| 原生 | 增强后 |
+|---|---|
+| ![原生](docs/demo-initial.png) | ![增强](docs/demo-running.png) |
+
+**🎬 在线演示**：浏览器直接打开 [`docs/demo.html`](docs/demo.html)（或加 `?autoplay=1` 自动演示）——原生 vs 增强对照 + 120 条文案真实轮播 + 计时器，双击即见。
 
 ## 特性
 
@@ -53,6 +68,7 @@ deep-diving-whale/
 ├── smoke-conversation.mjs    # 工厂冒烟测试
 ├── restore-all.mjs           # 一键检测/恢复（pnpm 升级覆盖后）
 ├── paths.mjs                 # 路径解析（--bundle= 覆盖）
+├── build-demo.mjs             # 从 captions.json 生成 docs/demo.html 演示页
 ├── dict-zh.txt               # 现成 120 条中文文案（可直接应用）
 ├── dict-en.txt               # 现成 120 条英文文案
 ├── captions.json             # 生成数据（zh/en 对齐）
