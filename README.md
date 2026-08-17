@@ -32,7 +32,14 @@ dsh plugin --profile web add git@github.com:z331281772/whale-whisper.git
 dsh plugin --profile web remove whale-whisper
 ```
 
-如需还原原生状态行，重装一次 `@deepseek-ai/dsh-client-ui-conversation` 包即可（dsh 升级后插件会自动重新生效）。
+如需还原原生状态行，插件已在首次打补丁时备份了原 bundle：
+
+```bash
+B=~/.dsh/profiles/node_modules/@deepseek-ai/dsh-client-ui-conversation/lib/client.js
+cp "$B.whale-whisper.bak" "$B"
+```
+
+或直接重装 `@deepseek-ai/dsh-client-ui-conversation` 包。
 
 ## 自定义文案
 

@@ -32,7 +32,14 @@ Restart `dsh web` and refresh the page. Built for dsh `0.1.0-rc.6`.
 dsh plugin --profile web remove whale-whisper
 ```
 
-To restore the stock status line, reinstall the `@deepseek-ai/dsh-client-ui-conversation` package once (after a dsh upgrade, the plugin re-applies itself automatically).
+To restore the stock status line, the plugin keeps a backup of the original bundle after the first patch:
+
+```bash
+B=~/.dsh/profiles/node_modules/@deepseek-ai/dsh-client-ui-conversation/lib/client.js
+cp "$B.whale-whisper.bak" "$B"
+```
+
+Or reinstall the `@deepseek-ai/dsh-client-ui-conversation` package.
 
 ## Custom captions
 

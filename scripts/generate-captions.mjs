@@ -5,11 +5,10 @@
  * describing the real task, concise and absurd.
  *
  * Usage:  node generate-captions.mjs [count]
- * Output: captions.json (zh/en aligned), dict-zh.txt, dict-en.txt
+ * Output: captions.json (zh/en aligned)
  *
- * To add themes later: add entries to POOL (zhPrefix/enPrefix + objects),
- * rerun, then paste the dict fragments into the ui-conversation bundle and
- * bump DDN_CAPTION_COUNT there.
+ * To add themes later: edit POOL, rerun, then reinstall the plugin so the
+ * node half re-patches the ui-conversation bundle with the new pools.
  */
 
 const POOL = [
@@ -119,18 +118,9 @@ for (const c of shuffled) {
   pick.push(c);
 }
 
-const zhLines = [];
-const enLines = [];
-pick.forEach((c, i) => {
-  const key = `turnStatus.caption.${String(i).padStart(2, "0")}`;
-  zhLines.push(`\t\t\t"${key}": "${c.zh}",`);
-  enLines.push(`\t\t\t"${key}": "${c.en}",`);
-});
 import fs from "node:fs";
 const OUT = `${import.meta.dirname}/..`;
 fs.writeFileSync(`${OUT}/captions.json`, JSON.stringify({ zh: pick.map(c => c.zh), en: pick.map(c => c.en) }, null, 2));
-fs.writeFileSync(`${OUT}/dict-zh.txt`, zhLines.join("\n") + "\n");
-fs.writeFileSync(`${OUT}/dict-en.txt`, enLines.join("\n") + "\n");
 console.log(`generated ${pick.length} captions (target ${ALLOWED})`);
 console.log(`objects used: ${byObj.size}, max per object: ${Math.max(...byObj.values())}`);
 console.log(`actions used: ${byAction.size}, max per action: ${Math.max(...byAction.values())}`);
