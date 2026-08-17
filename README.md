@@ -1,10 +1,10 @@
-# 且听鲸吟 whisper 🐋
+# 且听鲸吟 whale-whisper 🐋
 
 给 DeepSeek Harness **Web GUI 原生运行状态行**（"Deep diving..."）注入鲸鱼视角的趣味轮播文案与气泡动画——不打新插件、不加新 UI 元素，直接增强原生 `TurnStatus` 组件。
 
 ## 🎯 核心能力（一眼看懂）
 
-| | 原生 | whisper |
+| | 原生 | whale-whisper |
 |---|---|---|
 | 状态行 | `Deep diving...` 静态流光文字，卡到本轮结束 | 三颗上升气泡 + **120 条中英轮播文案**，动个不停 |
 | 换文案时机 | 无 | 每次**工具调用开始**随机换一条（Claude 同款）；纯思考时定时轮播 |
@@ -38,18 +38,18 @@
 
 ```bash
 dsh plugin --profile web add <仓库地址或本地路径>
-# 例：dsh plugin --profile web add git@github.com:z331281772/whisper.git
+# 例：dsh plugin --profile web add git@github.com:z331281772/whale-whisper.git
 ```
 
-安装后重启 `dsh web`：插件挂载时 **Node 半区自动检测并打补丁**（幂等，已打则跳过），刷新页面即见效果。卸载：`dsh plugin --profile web remove whisper`（bundle 补丁需用 `node scripts/restore-all.mjs` 还原，或重装 ui-conversation 包）。
+安装后重启 `dsh web`：插件挂载时 **Node 半区自动检测并打补丁**（幂等，已打则跳过），刷新页面即见效果。卸载：`dsh plugin --profile web remove whale-whisper`（bundle 补丁需用 `node scripts/restore-all.mjs` 还原，或重装 ui-conversation 包）。
 
 > Windows 注意：本地路径跨盘（如 D: 装到 C: 的 profile）会触发 pnpm 的绝对路径 bug，请用 git URL 安装或先建 junction。
 
 ### 方式 B：工具链手动打补丁
 
 ```bash
-git clone <your-repo-url> whisper
-cd whisper
+git clone <your-repo-url> whale-whisper
+cd whale-whisper
 
 node scripts/apply-to-bundle.mjs    # 把 120 条文案写入原生 bundle
 node scripts/self-check.mjs         # 16 项回归检查
@@ -74,7 +74,7 @@ node scripts/self-check.mjs         # 16 项回归检查
 ## 文件结构
 
 ```
-whisper/
+whale-whisper/
 ├── package.json               # dsh 插件规范：dsh.bundle.patch + dsh.client + exports
 ├── cordis.patch.yml           # 注册进 Web 浏览器 roster
 ├── lib/

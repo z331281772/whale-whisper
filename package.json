@@ -1,7 +1,7 @@
 {
-  "name": "whisper",
+  "name": "whale-whisper",
   "version": "0.1.0",
-  "description": "且听鲸吟 (whisper): whale-themed rotating captions + bubbles for the dsh Web native TurnStatus ('Deep diving...') — installable dsh plugin that patches the ui-conversation client bundle on mount",
+  "description": "且听鲸吟 (whale-whisper): whale-themed rotating captions + bubbles for the dsh Web native TurnStatus ('Deep diving...') — installable dsh plugin that patches the ui-conversation client bundle on mount",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
