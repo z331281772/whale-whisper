@@ -75,6 +75,11 @@ const POSTFIX = new Map([
   ["Writing to the a message in a bottle", "Writing to a message in a bottle"]
 ]);
 
+/** Hand-picked captions that must ALWAYS appear in the generated pool. */
+const MUST_INCLUDE = [
+  { zh: "创作宏伟诗篇…", en: "Composing a grand epic..." }
+];
+
 const ALLOWED = process.argv[2] ? Number(process.argv[2]) : 120;
 
 const combos = [];
@@ -87,20 +92,31 @@ for (const entry of POOL) {
     combos.push({ zh: `${zh}…`, en: `${en}...`, objZh, entryZh: entry.zh });
   }
 }
+for (const fixed of MUST_INCLUDE) {
+  combos.push({ ...fixed, objZh: fixed.zh, entryZh: fixed.zh, must: true });
+}
 
 // Theme budget: each object appears at most 3 times; each action at most 8.
 const byObj = new Map();
 const byAction = new Map();
 const pick = [];
+// MUST_INCLUDE entries always land in the pool first.
+for (const c of combos) {
+  if (c.must !== true) continue;
+  byObj.set(c.objZh, (byObj.get(c.objZh) ?? 0) + 1);
+  byAction.set(c.entryZh, (byAction.get(c.entryZh) ?? 0) + 1);
+  pick.push(c);
+}
 const shuffled = combos.sort(() => Math.random() - 0.5);
 for (const c of shuffled) {
+  if (pick.length >= ALLOWED) break;
+  if (c.must === true) continue;
   const o = (byObj.get(c.objZh) ?? 0);
   const a = (byAction.get(c.entryZh) ?? 0);
   if (o >= 3 || a >= 8) continue;
   byObj.set(c.objZh, o + 1);
   byAction.set(c.entryZh, a + 1);
   pick.push(c);
-  if (pick.length >= ALLOWED) break;
 }
 
 const zhLines = [];
