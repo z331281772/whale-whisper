@@ -38,5 +38,5 @@ console.log(hasPatch
 const bundleArg = `--bundle=${JSON.stringify(BUNDLE)}`;
 run(`node apply-to-bundle.mjs ${bundleArg}`);
 run(`node self-check.mjs ${bundleArg}`);
-run(`node smoke-conversation.cjs ${bundleArg}`);
+run(`node smoke-conversation.mjs ${bundleArg}`);
 console.log("\nrestore complete — refresh the GUI page to see the effect.");

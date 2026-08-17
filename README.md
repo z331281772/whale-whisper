@@ -50,7 +50,7 @@ deep-diving-status/
 ├── generate-captions.mjs     # 词表驱动生成器（自定义文案改这里）
 ├── apply-to-bundle.mjs       # 写入原生 bundle + 同步轮播池大小
 ├── self-check.mjs            # 16 项回归检查
-├── smoke-conversation.cjs    # 工厂冒烟测试
+├── smoke-conversation.mjs    # 工厂冒烟测试
 ├── restore-all.mjs           # 一键检测/恢复（pnpm 升级覆盖后）
 ├── paths.mjs                 # 路径解析（--bundle= 覆盖）
 ├── dict-zh.txt               # 现成 120 条中文文案（可直接应用）
