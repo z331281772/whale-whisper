@@ -1,8 +1,8 @@
-# deep-diving-whale bundle patch: register this package in the Web browser
+# whale-talk (鲸语吧) bundle patch: register this package in the Web browser
 # roster. client-modules scans host Loader entries for dsh.client.platform:
 # "web" declarations and composes them into window.__DSH_BOOT__; the browser
-# half then loads /plugins/deep-diving-whale/client.js. The actual TurnStatus
+# half then loads /plugins/whale-talk/client.js. The actual TurnStatus
 # enhancement is applied by the node half (lib/index.js) at mount time.
 - insert:
-    - id: deep-diving-whale
-      name: 'deep-diving-whale'
+    - id: whale-talk
+      name: 'whale-talk'

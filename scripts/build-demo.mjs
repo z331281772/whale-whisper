@@ -17,7 +17,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>deep-diving-whale · 核心能力演示</title>
+<title>鲸语吧 whale-talk · 核心能力演示</title>
 <style>
   body { margin:0; padding:40px 20px; font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif; background:#f4f5f9; color:#1f2329; }
   .wrap { max-width:840px; margin:0 auto; }
@@ -49,7 +49,7 @@ const html = `<!doctype html>
 </head>
 <body>
 <div class="wrap">
-  <h1>🐋 deep-diving-whale</h1>
+  <h1>🐋 鲸语吧 whale-talk</h1>
   <div class="sub">给 dsh Web 原生「Deep diving...」运行状态行加一点鲸鱼的幽默 —— 核心能力对照演示</div>
 
   <div class="card">

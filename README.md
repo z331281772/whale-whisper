@@ -1,10 +1,10 @@
-# deep-diving-whale 🐋
+# 鲸语吧 whale-talk 🐋
 
 给 DeepSeek Harness **Web GUI 原生运行状态行**（"Deep diving..."）注入鲸鱼视角的趣味轮播文案与气泡动画——不打新插件、不加新 UI 元素，直接增强原生 `TurnStatus` 组件。
 
 ## 🎯 核心能力（一眼看懂）
 
-| | 原生 | deep-diving-whale |
+| | 原生 | whale-talk |
 |---|---|---|
 | 状态行 | `Deep diving...` 静态流光文字，卡到本轮结束 | 三颗上升气泡 + **120 条中英轮播文案**，动个不停 |
 | 换文案时机 | 无 | 每次**工具调用开始**随机换一条（Claude 同款）；纯思考时定时轮播 |
@@ -38,18 +38,18 @@
 
 ```bash
 dsh plugin --profile web add <仓库地址或本地路径>
-# 例：dsh plugin --profile web add git@github.com:z331281772/deep-diving-whale.git
+# 例：dsh plugin --profile web add git@github.com:z331281772/whale-talk.git
 ```
 
-安装后重启 `dsh web`：插件挂载时 **Node 半区自动检测并打补丁**（幂等，已打则跳过），刷新页面即见效果。卸载：`dsh plugin --profile web remove deep-diving-whale`（bundle 补丁需用 `node scripts/restore-all.mjs` 还原，或重装 ui-conversation 包）。
+安装后重启 `dsh web`：插件挂载时 **Node 半区自动检测并打补丁**（幂等，已打则跳过），刷新页面即见效果。卸载：`dsh plugin --profile web remove whale-talk`（bundle 补丁需用 `node scripts/restore-all.mjs` 还原，或重装 ui-conversation 包）。
 
 > Windows 注意：本地路径跨盘（如 D: 装到 C: 的 profile）会触发 pnpm 的绝对路径 bug，请用 git URL 安装或先建 junction。
 
 ### 方式 B：工具链手动打补丁
 
 ```bash
-git clone <your-repo-url> deep-diving-whale
-cd deep-diving-whale
+git clone <your-repo-url> whale-talk
+cd whale-talk
 
 node scripts/apply-to-bundle.mjs    # 把 120 条文案写入原生 bundle
 node scripts/self-check.mjs         # 16 项回归检查
@@ -74,7 +74,7 @@ node scripts/self-check.mjs         # 16 项回归检查
 ## 文件结构
 
 ```
-deep-diving-whale/
+whale-talk/
 ├── package.json               # dsh 插件规范：dsh.bundle.patch + dsh.client + exports
 ├── cordis.patch.yml           # 注册进 Web 浏览器 roster
 ├── lib/
